@@ -94,11 +94,3 @@ for(i in 3:length(groups)){
   j <- (i-2)
   newGroups[[j+1]] <- getSlicedGroups(newGroups[[j]], groups[[i]])    
 }
-
-finalGroups <- length(newGroups)
-representativeCounters <- list()
-for(i in 1:length(newGroups[[finalGroups]])){
-  representativeCounters[i] <- newGroups[[finalGroups]][[i]][[1]]
-}
-
-representativeCounters
