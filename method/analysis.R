@@ -51,7 +51,7 @@ getGroupsFromCluster <- function(data){
   for(i in 1:length(cluster)){
     groups[[cluster[i]]][length(groups[[cluster[i]]])+1] <- names(cluster[i])
   }
-  return(groups)
+  return(list(groups,p_mtx))
 }
 
 getSlicedGroups <- function(exp1Groups, exp2Groups){
@@ -81,16 +81,55 @@ getSlicedGroups <- function(exp1Groups, exp2Groups){
   return (groups)
 }
 
+getRepresentativeCounters <- function(groups, p_mtx){
+  rCounters <- list()
+  for(i in 1:length(groups)){
+    lastSum <- Inf
+    lastCounter <- ""
+    for(j in 1:length(groups[[i]])){
+      counter <- groups[[i]][[j]]
+      sum <- 0
+      for(k in 1:length(groups[[i]])){
+        if(j!=k){
+          for(z in 1:length(p_mtx)){
+            if(!is.na(match(groups[[i]][[j]],rownames(p_mtx[[z]]))) & !is.na(match(groups[[i]][[k]],rownames(p_mtx[[z]])))){
+              sum <- sum + p_mtx[[z]][groups[[i]][[j]],groups[[i]][[k]]]
+            }
+            else{
+              sum <- sum + 1
+            }
+          }
+        }
+      }
+      if(sum < lastSum){
+        lastSum <- sum
+        lastCounter <- counter
+      }
+    }
+    rCounters[[i]] <- lastCounter
+  }
+  return (rCounters)
+}
+
 data <- getPreprocedData(dataFilePaths, firstLines, lastLines)
 
 groups <- list()
+p_mtx <- list()
 for(i in 1:length(data)){
-  groups[[i]] <- getGroupsFromCluster(data[[i]])
+  result <- getGroupsFromCluster(data[[i]])
+  groups[[i]]<- result[[1]]
+  p_mtx[[i]] <- result[[2]]
 }
 
 newGroups <- list()
 newGroups[[1]] <- getSlicedGroups(groups[[1]], groups[[2]])
+#length(newGroups[[1]])
 for(i in 3:length(groups)){
   j <- (i-2)
   newGroups[[j+1]] <- getSlicedGroups(newGroups[[j]], groups[[i]])    
+  #print(length(newGroups[[j+1]]))
 }
+
+counters <- getRepresentativeCounters(newGroups[[length(newGroups)]], p_mtx)
+counters
+
